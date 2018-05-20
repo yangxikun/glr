@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path"
 )
 
 var mainPkg string
@@ -27,7 +28,7 @@ func main() {
 	if mainGoPath == "" {
 		log.Fatalln(mainPkg, "not found")
 	}
-	mainBin = mainGoPath + "/bin/" + mainPkg
+	mainBin = mainGoPath + "/bin/" + path.Base(mainPkg)
 
 	autoBuild()
 	startChannel <- ""
