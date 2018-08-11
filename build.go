@@ -1,15 +1,14 @@
 package main
 
 import (
-	"io"
-	"io/ioutil"
+	"github.com/kballard/go-shellquote"
 	"log"
 	"os"
 	"os/exec"
 	"time"
 )
 
-var startChannel = make(chan string)
+var startChannel = make(chan string, 7)
 var stopChannel = make(chan struct{})
 
 func autoBuild() {
@@ -25,21 +24,22 @@ func autoBuild() {
 
 			flushEvents()
 
-			buildFailed := false
-			errorMessage, ok := build(mainPkg)
-			if !ok {
-				buildFailed = true
-				log.Printf("Build Failed:\n%s", errorMessage)
-			}
-
-			if buildFailed {
+			err := build(mainPkg)
+			if err != nil {
+				log.Printf("Build Failed:\n%s", err)
 				continue
 			}
+
 			if started {
 				stopChannel <- struct{}{}
 			}
-			run()
 			watch()
+			err = run()
+			if err != nil {
+				log.Println(err)
+				started = false
+				continue
+			}
 			started = true
 		}
 	}()
@@ -56,33 +56,24 @@ func flushEvents() {
 	}
 }
 
-func build(mainPkg string) (string, bool) {
+func build(mainPkg string) error {
 	log.Println("Building...")
 
-	cmd := exec.Command("go", "install", "-x", mainPkg)
-
-	stderr, err := cmd.StderrPipe()
+	bFlags, err := shellquote.Split(*buildFlags)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+	}
+	cmdArgs := []string{"install"}
+	cmdArgs = append(cmdArgs, bFlags...)
+	cmdArgs = append(cmdArgs, "-x", mainPkg)
+	cmd := exec.Command("go", cmdArgs...)
+	// don't use pipe, seems cmd pipe will stuck
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
 	}
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	io.Copy(os.Stdout, stdout)
-	errBuf, _ := ioutil.ReadAll(stderr)
-
-	err = cmd.Wait()
-	if err != nil {
-		return string(errBuf), false
-	}
-
-	return "", true
+	return nil
 }

@@ -13,7 +13,9 @@ var mainGoPath string
 
 var m = flag.String("main", "", "main package name")
 var wd = flag.String("wd", "", "working directory")
+var args = flag.String("args", "", "args")
 var delayBuild = flag.Int("delay", 1000, "delay *ms before rebuild")
+var buildFlags = flag.String("build", "", "build flags")
 
 func main() {
 	flag.Parse()

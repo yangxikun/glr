@@ -1,16 +1,22 @@
 package main
 
 import (
+	"github.com/kballard/go-shellquote"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 )
 
-func run() {
+func run() error {
 	log.Println("Running...")
+	log.Println(mainBin, *args)
 
-	cmd := exec.Command(mainBin)
+	cmdArga, err := shellquote.Split(*args)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(mainBin, cmdArga...)
 	cmd.Dir = *wd
 
 	stderr, err := cmd.StderrPipe()
@@ -37,4 +43,5 @@ func run() {
 		log.Println("Killing PID", pid)
 		cmd.Process.Kill()
 	}()
+	return nil
 }
