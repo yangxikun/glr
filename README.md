@@ -13,11 +13,15 @@ Usage
 	$ glr -main app
 
 ```
-Usage of glr:
--delay int
-	delay *ms before rebuild (default 1000)
--main string
-	main package name
--wd string
-	working directory
+Usage of ./glr:
+  -args string
+    	args
+  -build string
+    	build flags
+  -delay int
+    	delay *ms before rebuild (default 1000)
+  -main string
+    	main package name
+  -wd string
+    	working directory
 ```
