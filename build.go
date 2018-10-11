@@ -24,23 +24,29 @@ func autoBuild() {
 
 			flushEvents()
 
+			buildFail := false
 			err := build(mainPkg)
 			if err != nil {
 				log.Printf("Build Failed:\n%s", err)
-				continue
+				buildFail = true
 			}
 
-			if started {
+			if !buildFail && started {
 				stopChannel <- struct{}{}
 			}
 			watch()
-			err = run()
-			if err != nil {
-				log.Println(err)
+
+			if buildFail {
 				started = false
-				continue
+			} else {
+				err = run()
+				if err != nil {
+					log.Println(err)
+					started = false
+					continue
+				}
+				started = true
 			}
-			started = true
 		}
 	}()
 }
