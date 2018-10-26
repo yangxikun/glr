@@ -41,7 +41,10 @@ func run() error {
 		<-stopChannel
 		pid := cmd.Process.Pid
 		log.Println("Killing PID", pid)
-		cmd.Process.Kill()
+		err := cmd.Process.Kill()
+		if err != nil {
+			log.Panicln("Killing err", err)
+		}
 	}()
 	return nil
 }
