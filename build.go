@@ -36,9 +36,7 @@ func autoBuild() {
 			}
 			watch()
 
-			if buildFail {
-				started = false
-			} else {
+			if !buildFail {
 				err = run()
 				if err != nil {
 					log.Println(err)
@@ -71,7 +69,7 @@ func build(mainPkg string) error {
 	}
 	cmdArgs := []string{"install"}
 	cmdArgs = append(cmdArgs, bFlags...)
-	cmdArgs = append(cmdArgs, "-x", mainPkg)
+	cmdArgs = append(cmdArgs, mainPkg)
 	cmd := exec.Command("go", cmdArgs...)
 	// don't use pipe, seems cmd pipe will stuck
 	cmd.Stdout = os.Stdout
