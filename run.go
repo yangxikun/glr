@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/kballard/go-shellquote"
 	"io"
 	"log"
 	"os"
 	"os/exec"
+
+	"github.com/kballard/go-shellquote"
 )
 
 func run() error {
@@ -45,6 +46,12 @@ func run() error {
 		if err != nil {
 			log.Panicln("Killing err", err)
 		}
+		state, err := cmd.Process.Wait()
+		if err != nil {
+			log.Panicln("Wait err", err)
+		}
+		log.Println(state)
+		waitChannel <- struct{}{}
 	}()
 	return nil
 }

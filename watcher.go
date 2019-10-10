@@ -34,7 +34,7 @@ func init() {
 			case ev := <-watcher.Event:
 				if !ev.IsAttrib() && strings.HasSuffix(ev.Name, ".go") {
 					log.Printf("sending event %s\n", ev)
-					startChannel <- ev.String()
+					eventChannel <- ev.String()
 				}
 			case err := <-watcher.Error:
 				log.Fatalln(err)

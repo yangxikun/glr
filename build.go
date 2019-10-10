@@ -1,21 +1,23 @@
 package main
 
 import (
-	"github.com/kballard/go-shellquote"
 	"log"
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/kballard/go-shellquote"
 )
 
-var startChannel = make(chan string, 7)
+var eventChannel = make(chan string, 7)
 var stopChannel = make(chan struct{})
+var waitChannel = make(chan struct{})
 
 func autoBuild() {
 	started := false
 	go func() {
 		for {
-			eventName := <-startChannel
+			eventName := <-eventChannel
 
 			log.Println("receiving first event", eventName)
 			log.Printf("sleeping for %d milliseconds\n", *delayBuild)
@@ -33,6 +35,7 @@ func autoBuild() {
 
 			if !buildFail && started {
 				stopChannel <- struct{}{}
+				<-waitChannel
 			}
 			watch()
 
@@ -52,7 +55,7 @@ func autoBuild() {
 func flushEvents() {
 	for {
 		select {
-		case eventName := <-startChannel:
+		case eventName := <-eventChannel:
 			log.Println("receiving event", eventName)
 		default:
 			return

@@ -33,6 +33,6 @@ func main() {
 	mainBin = mainGoPath + "/bin/" + path.Base(mainPkg)
 
 	autoBuild()
-	startChannel <- ""
+	eventChannel <- ""
 	<-make(chan int)
 }
