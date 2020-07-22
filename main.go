@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 	"path"
+	"strings"
 )
 
 var mainPkg string
@@ -16,6 +16,7 @@ var wd = flag.String("wd", "", "working directory")
 var args = flag.String("args", "", "args")
 var delayBuild = flag.Int("delay", 1000, "delay *ms before rebuild")
 var buildFlags = flag.String("build", "", "build flags")
+var verbose = flag.Bool("verbose", false, "more log")
 
 func main() {
 	flag.Parse()
@@ -28,9 +29,9 @@ func main() {
 		break
 	}
 	if mainGoPath == "" {
-		log.Fatalln(mainPkg, "not found")
+		mainGoPath = goPaths[0]
 	}
-	mainBin = mainGoPath + "/bin/" + path.Base(mainPkg)
+	mainBin = mainGoPath + "/bin/" + path.Base(strings.TrimSpace(goList(mainPkg, `{{ .Module.Path }}`)))
 
 	autoBuild()
 	eventChannel <- ""

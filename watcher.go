@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/howeyc/fsnotify"
-	"io"
-	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/howeyc/fsnotify"
 )
 
 var goPaths []string
@@ -44,48 +43,38 @@ func init() {
 }
 
 func getDepFolders() []string {
-	cmd := exec.Command("go", "list", "-f", `{{ join .Deps "\n" }}`, mainPkg)
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	depsText, _ := ioutil.ReadAll(stdout)
-	io.Copy(os.Stderr, stderr)
-
-	err = cmd.Wait()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	deps := strings.Split(strings.Trim(string(depsText), "\n"), "\n")
+	deps := strings.Split(strings.Trim(goList(mainPkg, `{{ join .Deps "\n" }}`), "\n"), "\n")
 	var watchedFolders []string
+	appendWatchedFolders := func(path string) bool {
+		e, err := exists(path)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if e {
+			watchedFolders = append(watchedFolders, path)
+			return true
+		}
+		return false
+	}
 	for _, dep := range deps {
+		path := fmt.Sprintf("vendor/%s", dep)
+		ok, err := exists(path)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if ok {
+			continue
+		}
 		for _, gopath := range goPaths {
 			path := fmt.Sprintf("%s/src/%s", gopath, dep)
-			e, err := exists(path)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			if e {
-				watchedFolders = append(watchedFolders, path)
+			if appendWatchedFolders(path) {
 				break
 			}
 		}
 	}
 
-	watchedFolders = append(watchedFolders, mainGoPath+"/src/"+mainPkg)
+	appendWatchedFolders(mainGoPath + "/src/" + mainPkg)
+	appendWatchedFolders(mainPkg)
 	return watchedFolders
 }
 
@@ -104,6 +93,18 @@ func exists(path string) (bool, error) {
 func watch() {
 	watchedFolders := getDepFolders()
 	for _, folder := range watchedFolders {
+		if *verbose {
+			log.Println("recursive watch:", folder)
+		}
+		filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+			if info.IsDir() {
+				err := watcher.Watch(path)
+				if err != nil {
+					log.Fatalln(err)
+				}
+			}
+			return nil
+		})
 		err := watcher.Watch(folder)
 		if err != nil {
 			log.Fatalln(err)

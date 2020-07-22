@@ -81,6 +81,7 @@ func build(mainPkg string) error {
 	if err != nil {
 		return err
 	}
+	log.Println("Build Success!")
 
 	return nil
 }
