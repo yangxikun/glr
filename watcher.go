@@ -67,14 +67,13 @@ func getDepFolders() []string {
 		}
 		for _, gopath := range goPaths {
 			path := fmt.Sprintf("%s/src/%s", gopath, dep)
-			if appendWatchedFolders(path) {
+			if !strings.HasPrefix(path, mainPkgDir) && appendWatchedFolders(path) {
 				break
 			}
 		}
 	}
 
-	appendWatchedFolders(mainGoPath + "/src/" + mainPkg)
-	appendWatchedFolders(mainPkg)
+	appendWatchedFolders(mainPkgDir)
 	return watchedFolders
 }
 

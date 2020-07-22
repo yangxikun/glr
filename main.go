@@ -8,6 +8,7 @@ import (
 )
 
 var mainPkg string
+var mainPkgDir string
 var mainBin string
 var mainGoPath string
 
@@ -32,6 +33,7 @@ func main() {
 		mainGoPath = goPaths[0]
 	}
 	mainBin = mainGoPath + "/bin/" + path.Base(strings.TrimSpace(goList(mainPkg, `{{ .Module.Path }}`)))
+	mainPkgDir = strings.TrimSpace(goList(mainPkg, `{{ .Module.Dir }}`))
 
 	autoBuild()
 	eventChannel <- ""
